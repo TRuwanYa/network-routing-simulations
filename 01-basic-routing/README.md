@@ -88,6 +88,3 @@ Open either file in Cisco Packet Tracer to inspect the configuration and reprodu
 
 Originally developed as part of CO2208 — Computer Networks, Semester 4, University of Sri Jayewardenepura.
 
-## Author
-
-Ruwanya Herath
