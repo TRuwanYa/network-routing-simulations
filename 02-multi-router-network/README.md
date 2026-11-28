@@ -1,6 +1,6 @@
 # Multi-Router Campus Network
 
-A Cisco Packet Tracer simulation of a departmental campus network with a redundant router backbone, central administration services and a simulated external network. The project provides a common topology for studying dynamic routing, path selection, resilience and edge network services.
+A Cisco Packet Tracer simulation of a departmental campus network with a redundant router backbone, central administration services and a simulated external network. The project provides a common topology for studying dynamic routing, path selection, resilience, hierarchical routing, routing authentication and edge network services.
 
 ## Objectives
 
@@ -9,6 +9,7 @@ A Cisco Packet Tracer simulation of a departmental campus network with a redunda
 - Provide redundant paths between departmental routers.
 - Evaluate dynamic routing protocols on an identical physical topology.
 - Investigate route convergence, equal-cost paths and simulated external access using NAT/PAT.
+- Demonstrate OSPF cost-based routing, automatic failover, multi-area architecture and routing authentication.
 
 ## Physical network topology
 
@@ -114,17 +115,53 @@ Test each host's default gateway and adjacent router addresses using `ping`. The
 | Implementation | Status | Documentation |
 |---|---|---|
 | RIPv2 | Implemented | [RIPv2 experiment](ripv2/README.md) |
-| OSPF | Planned | Single-area routing and convergence comparison |
+| OSPFv2 | Implemented | [OSPF experiments](03-ospf-routing/README.md) |
 | EIGRP | Planned | DUAL, composite metrics and convergence comparison |
 
 Full static routing is not repeated here because it was demonstrated in the preceding basic network project. The extended topology focuses on dynamic routing and resilience.
 
+### RIPv2 — Distance-vector routing
+
+The RIPv2 implementation establishes dynamic routing across the campus using hop count as its metric. It provides the foundation for studying route exchange, redundant paths and edge services using NAT/PAT in the simulated external network.
+
+See the [RIPv2 documentation](ripv2/README.md) for configuration and observations.
+
+### OSPF — Link-state routing
+
+The OSPF implementation reuses the same physical topology and addressing scheme. A single-area Area 0 baseline establishes neighbor adjacencies, link-state databases (LSDBs), shortest-path routing and equal-cost multipath routes. Four subsequent experiments investigate specific protocol capabilities without repeating the basic network setup.
+
+| Experiment | Key observation | Documentation | Simulation |
+|---|---|---|---|
+| Baseline | FULL adjacencies, consistent LSA identities and versions on R1 and R4, and equal-cost routes to the Civil LAN | [Baseline observations](03-ospf-routing/README.md) | [Packet Tracer](03-ospf-routing/ospf-baseline.pkt) |
+| 01 — Cost-based routing | Increasing the direct interface cost from 64 to 250 selects a longer path with total cost 193 | [README](03-ospf-routing/01-cost-based-routing/README.md) | [Packet Tracer](03-ospf-routing/01-cost-based-routing/ospf-cost-routing.pkt) |
+| 02 — Network resilience | Link failure triggers alternate route selection; continuous ping records 220 of 221 replies | [README](03-ospf-routing/02-network-resilience/README.md) | [Packet Tracer](03-ospf-routing/02-network-resilience/ospf-redundant-network.pkt) |
+| 03 — Multi-area OSPF | Area Border Routers, inter-area routes (`O IA`) and Type 3 Summary LSAs | [README](03-ospf-routing/03-multi-area-ospf/README.md) | [Packet Tracer](03-ospf-routing/03-multi-area-ospf/ospf-multi-area.pkt) |
+| 04 — Secure OSPF | Matching MD5 keys permit adjacency; mismatched keys cause adjacency loss and rerouting; correcting the key restores adjacency | [README](03-ospf-routing/04-secure-ospf/README.md) | [Packet Tracer](03-ospf-routing/04-secure-ospf/ospf-authentication.pkt) |
+
+### RIPv2 and OSPF comparison
+
+| Feature | RIPv2 | OSPFv2 |
+|---|---|---|
+| Routing approach | Distance-vector | Link-state |
+| Metric | Hop count | Cumulative interface cost |
+| Path calculation | Distance-vector algorithm | Dijkstra's shortest-path-first algorithm |
+| Network hierarchy | Flat routing domain | Backbone and multiple areas |
+| Routing updates | Periodic and triggered updates | Event-driven LSA flooding with periodic refresh |
+| Maximum usable hop count | 15 | No RIP-style 15-hop limit |
+| Equal-cost multipath | Supported | Supported |
+| Authentication | Supports MD5 | Supports MD5 and stronger mechanisms on compatible platforms; integrates with adjacency and area configuration |
+
+The OSPF experiments demonstrate greater control over path selection, hierarchical routing and authenticated adjacency management. Both protocols support redundancy and authentication; these features are not exclusive to OSPF. OSPF generally offers faster convergence, but this project does not establish a controlled quantitative convergence comparison between the protocols.
+
 ## Running the simulation
 
 1. Open [extended-network-base.pkt](extended-network-base.pkt) in Cisco Packet Tracer to inspect the unmodified base network.
-2. Open the protocol-specific simulation to reproduce the corresponding experiment.
+2. Open the [RIPv2 documentation](ripv2/README.md) or [OSPF documentation](03-ospf-routing/README.md) and select the corresponding simulation.
 3. Use the interface addressing table and protocol README to inspect and verify the configuration.
+4. Reproduce the experiments using separate Packet Tracer files to preserve the baseline and isolate configuration changes.
 
 ## Tools and scope
 
-Cisco Packet Tracer, Cisco IOS CLI, IPv4, VLSM, Ethernet, serial WAN links and dynamic routing. This is an educational simulation; performance and convergence observations are not production hardware benchmarks. Redundancy is limited to the internal ring, and no production firewall, ISP or high-availability edge design is implied.
+Cisco Packet Tracer, Cisco IOS CLI, IPv4, VLSM, Ethernet, serial WAN links, RIPv2, OSPFv2 and simulated NAT/PAT. This is an educational simulation; performance and convergence observations are not production hardware benchmarks. Redundancy is limited to the internal ring, and no production firewall, ISP or high-availability edge design is implied.
+
+The multi-area experiment demonstrates hierarchy rather than measuring scalability at production scale. MD5 authentication is used for lab compatibility on one tested link; it does not encrypt traffic or secure the entire routing domain. External connectivity and NAT/PAT are not claimed as verified in the OSPF experiments.
